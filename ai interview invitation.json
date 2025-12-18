@@ -1,0 +1,249 @@
+{
+  "name": "ai interview invitation",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "documentId": {
+          "__rl": true,
+          "value": "101ZD2QbgdjnWS5gsewtP2q0aZ-2pYcXloGaem3zzSOU",
+          "mode": "list",
+          "cachedResultName": "अशीर्षकांकित स्प्रेडशीट",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/101ZD2QbgdjnWS5gsewtP2q0aZ-2pYcXloGaem3zzSOU/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1008929481,
+          "mode": "list",
+          "cachedResultName": "Foglio1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/101ZD2QbgdjnWS5gsewtP2q0aZ-2pYcXloGaem3zzSOU/edit#gid=1008929481"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "5b549879-9bd2-4771-b1c3-67892bc4fa71",
+      "name": "Google Sheets Trigger",
+      "credentials": {
+        "googleSheetsTriggerOAuth2Api": {
+          "id": "EzmZKXyu8p0xQMMC",
+          "name": "Google Sheets Trigger account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// n8n expects an array of objects as output\n\nconst now = new Date();\n\n// Define the free slots: Monday, Wednesday, Friday at 3:00 PM\n// JavaScript Date: 0=Sunday, 1=Monday, ..., 5=Friday, 6=Saturday\nconst slots = [\n  { day: 1, hour: 15 }, // Monday 3 PM\n  { day: 3, hour: 15 }, // Wednesday 3 PM\n  { day: 5, hour: 15 }, // Friday 3 PM\n];\n\n// Helper to get the next slot after 'now', always in the future (never today)\nfunction getNextSlot(now, slots) {\n  let minDiff = Infinity;\n  let nextSlotDate = null;\n\n  for (const slot of slots) {\n    let daysUntil = (slot.day - now.getDay() + 7) % 7;\n    // Always skip today, even if the slot time hasn't passed\n    if (daysUntil === 0) {\n      daysUntil = 7;\n    }\n\n    const slotDate = new Date(\n      now.getFullYear(),\n      now.getMonth(),\n      now.getDate() + daysUntil,\n      slot.hour,\n      0,\n      0,\n      0\n    );\n\n    if (slotDate - now < minDiff) {\n      minDiff = slotDate - now;\n      nextSlotDate = slotDate;\n    }\n  }\n\n  return nextSlotDate;\n}\n\n// Format as \"YYYY-MM-DD HH:MM:SS\"\nfunction formatDate(date) {\n  const pad = (n) => n.toString().padStart(2, '0');\n  return (\n    date.getFullYear() +\n    '-' +\n    pad(date.getMonth() + 1) +\n    '-' +\n    pad(date.getDate()) +\n    ' ' +\n    pad(date.getHours()) +\n    ':00:00'\n  );\n}\n\nconst nextSlot = getNextSlot(now, slots);\n\n// Create the end time (1 hour after start)\nconst endSlot = new Date(nextSlot.getTime() + 60 * 60 * 1000);\n\nreturn [\n  {\n    json: {\n      nextSlot: formatDate(nextSlot),\n      endSlot: formatDate(endSlot)\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        0
+      ],
+      "id": "d2e77e7e-9d1d-4bf8-b072-d5690d6d960b",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "calendar": {
+          "__rl": true,
+          "value": "mahalek237@gmail.com",
+          "mode": "list",
+          "cachedResultName": "mahalek237@gmail.com"
+        },
+        "start": "={{ $json.nextSlot }}",
+        "end": "={{ $json.endSlot }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        448,
+        0
+      ],
+      "id": "0911abc6-65be-4e9c-a604-c1e0013b9962",
+      "name": "Create an event",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "kCpPH79pHauYREJq",
+          "name": "Google Calendar account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('Google Sheets Trigger').first().json.NAME }}\n\n{{ $('Google Sheets Trigger').first().json.EDUCATIONAL }}\n\nLink for calendar: {{ $json.htmlLink }}\n\nMy name is Komal, I'm from Techdome",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "You are a helpful email writing assistant. You take the information I provide you with and write a personlised email to the candidate we are calling in for an interview. The goal is to send an email with Google Calendar Link. Be straight to the point. The email should start with a 15-20 word opening statement, then details to the link and then signature "
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        672,
+        0
+      ],
+      "id": "484c4d40-3eb0-48fb-a3a4-ee94fe2af965",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        752,
+        224
+      ],
+      "id": "98a5b1c8-54ad-4b12-bd30-994695837303",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "gAWrv3Oa6tNBunOv",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return [\n  {\n    json: {\n      email: {\n        subject: \"🎯 Interview Shortlisted – Data Analyst Role | Techdome\",\n        body: `\n<div style=\"font-family:'Segoe UI', Arial, sans-serif; background:linear-gradient(180deg,#eef2ff,#f8fafc); padding:40px;\">\n\n  <div style=\"max-width:680px; margin:auto; background:#ffffff; border-radius:20px; overflow:hidden; box-shadow:0 20px 50px rgba(0,0,0,0.15);\">\n\n    <!-- Header -->\n    <div style=\"background:linear-gradient(135deg,#2563eb,#1e3a8a); padding:36px; position:relative;\">\n      <h1 style=\"margin:0; color:#ffffff; font-size:26px;\">\n        🎉 You’re Shortlisted!\n      </h1>\n      <p style=\"margin:8px 0 0; color:#dbeafe; font-size:15px;\">\n        Interview Invitation – Techdome\n      </p>\n\n      <!-- Role Badge -->\n      <div style=\"position:absolute; top:28px; right:28px; background:#ffffff; color:#1e40af; padding:8px 16px; border-radius:999px; font-size:13px; font-weight:700;\">\n        📊 Data Analyst\n      </div>\n    </div>\n\n    <!-- Body -->\n    <div style=\"padding:36px;\">\n\n      <p style=\"font-size:16px; color:#111827;\">\n        Dear <strong>Komal</strong>,\n      </p>\n\n      <p style=\"font-size:15.5px; color:#374151; line-height:1.9;\">\n        Congratulations! 🎊  \n        After reviewing your profile, we are excited to move forward with you for the\n        <strong style=\"color:#2563eb;\">Data Analyst</strong> position at\n        <strong style=\"color:#2563eb;\">Techdome</strong>.\n      </p>\n\n      <p style=\"font-size:15.5px; color:#374151; line-height:1.9;\">\n        This interview is an opportunity for us to understand your analytical thinking,\n        real-world data experience, and how you turn insights into impactful decisions.\n      </p>\n\n      <!-- Skills Chips -->\n      <div style=\"margin:26px 0;\">\n        <p style=\"font-size:14px; font-weight:700; color:#111827; margin-bottom:10px;\">\n          🧠 Role Focus Areas\n        </p>\n        <div>\n          <span style=\"display:inline-block; margin:4px; padding:6px 12px; background:#eef2ff; color:#1e40af; border-radius:999px; font-size:13px;\">SQL</span>\n          <span style=\"display:inline-block; margin:4px; padding:6px 12px; background:#eef2ff; color:#1e40af; border-radius:999px; font-size:13px;\">Excel</span>\n          <span style=\"display:inline-block; margin:4px; padding:6px 12px; background:#eef2ff; color:#1e40af; border-radius:999px; font-size:13px;\">Power BI</span>\n          <span style=\"display:inline-block; margin:4px; padding:6px 12px; background:#eef2ff; color:#1e40af; border-radius:999px; font-size:13px;\">Problem Solving</span>\n          <span style=\"display:inline-block; margin:4px; padding:6px 12px; background:#eef2ff; color:#1e40af; border-radius:999px; font-size:13px;\">Business Insights</span>\n        </div>\n      </div>\n\n      <!-- Interview Card -->\n      <div style=\"margin:32px 0; padding:26px; background:linear-gradient(180deg,#f8fafc,#ffffff); border-radius:16px; border:1px solid #e5e7eb;\">\n        <p style=\"margin:0; font-size:15px; color:#111827; font-weight:700;\">\n          📅 Schedule Your Interview\n        </p>\n        <p style=\"margin:10px 0 20px; font-size:14.5px; color:#475569;\">\n          Select a time slot that works best for you. The interview will be smooth, structured, and discussion-focused.\n        </p>\n\n        <!-- CTA -->\n        <a href=\"https://www.google.com/calendar/event?eid=cG02cjM4YzhjdWs4ZmIxMjRicTgxcnV1aDAgcm9oaXRiYWNoY2hoZTE3QG0\"\n           style=\"display:inline-block; padding:16px 30px; background:linear-gradient(135deg,#2563eb,#1d4ed8); color:#ffffff; font-size:15px; font-weight:700; border-radius:12px; text-decoration:none;\">\n          🚀 Schedule Interview Slot\n        </a>\n      </div>\n\n      <!-- Timeline -->\n      <div style=\"margin-bottom:28px;\">\n        <p style=\"font-size:14px; font-weight:700; color:#111827; margin-bottom:10px;\">\n          ⏱ What happens next?\n        </p>\n        <ul style=\"font-size:14.5px; color:#374151; padding-left:20px; line-height:1.8;\">\n          <li>Confirm your interview slot</li>\n          <li>Attend the technical & analytical discussion</li>\n          <li>Receive feedback & next steps</li>\n        </ul>\n      </div>\n\n      <p style=\"font-size:15px; color:#374151;\">\n        We’re excited to learn more about your journey and explore how you can grow with\n        <strong>Techdome’s data-driven team</strong>.\n      </p>\n\n      <p style=\"font-size:14px; color:#64748b;\">\n        Need help? Just reply to this email — we’re happy to assist.\n      </p>\n\n    </div>\n\n    <!-- Footer -->\n    <div style=\"padding:24px 36px; background:#f8fafc; border-top:1px solid #e5e7eb;\">\n      <p style=\"margin:0; font-size:14px; font-weight:700; color:#111827;\">\n        Rohit\n      </p>\n      <p style=\"margin:4px 0 0; font-size:13px; color:#64748b;\">\n        Talent Acquisition | Techdome\n      </p>\n    </div>\n\n  </div>\n\n</div>\n`\n      }\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1024,
+        0
+      ],
+      "id": "af1597a4-1a0f-4d3b-9178-74be8d735550",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "sendTo": "mahalek237@gmail.com",
+        "subject": "={{ $json.email.subject }}",
+        "message": "={{ $json.email.body }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1232,
+        0
+      ],
+      "id": "700d04e7-f42c-491a-b03d-41ec256face6",
+      "name": "Send a message",
+      "webhookId": "d64393ef-2e84-446d-a0be-7ce56056f99f",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "7y95GTEhIrMEVdFn",
+          "name": "Gmail account 2"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Google Sheets Trigger": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Create an event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create an event": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "41cd910d-f6a5-45a6-8705-0bf5e22ec906",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4e69d2fe6cd2e57260ab8095a1bf9abc798a270803828a6c65976bc87cf2c627"
+  },
+  "id": "lggUcFFmB3FXTR7Q",
+  "tags": []
+}
