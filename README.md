@@ -5,7 +5,7 @@
 An **end-to-end interview scheduling and email automation system** built using **n8n**, **Google APIs**, and **OpenAI**.
 This workflow automatically schedules interviews and sends AI-generated invitation emails when a candidate is added to Google Sheets.
 
-<img width="1912" height="943" alt="Screenshot 2026-01-05 095033" src="https://github.com/user-attachments/assets/88337df2-844b-4525-a0db-ff45b0c7c748" />
+<img width="1753" height="874" alt="Screenshot 2025-12-18 111439" src="https://github.com/user-attachments/assets/e8aa545b-483d-4acf-a8e6-ada8ca78925c" />
 
 
 ---
